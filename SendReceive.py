@@ -1,16 +1,49 @@
 #!/usr/local/bin/python
 
-from serial import Serial, SerialException
+from serial import Serial
+import matplotlib.pyplot as pyplot
 import time
+import math
 
-# The Serial constructor will take a different first argument on 
-# Windows. The first argument on Windows will likely be of the form
-# 'COMX' where 'X' is a number like 3,4,5 etc.
-# Eg.cxn = Serial('COM5', baudrate=9600
-#
-# NOTE: You won't be able to program your Arduino or run the Serial 
-# Monitor while the Python script is running. 
+
+class Point:
+    def __init__(self, x, y=0.0, z=0.0):
+        self.x = x
+        self.y = y
+        self.z = z
+
+
+class PointCollection:
+    def __init__(self, points_to_keep):
+        self.points_to_keep = points_to_keep
+        self.points = []
+
+    def add_point(self, point):
+        if len(self.points) >= self.points_to_keep:
+            self.points.pop(0)  # Remove the oldest point
+        print('Adding point ({0:0.3f},{1:0.3f})'.format(point.x, point.y))
+        self.points.append(point)
+
+    def get_points(self):
+        return self.points
+
+    def get_x_values(self):
+        return [p.x for p in self.points]
+
+    def get_y_values(self):
+        return [p.y for p in self.points]
+
+    def get_z_values(self):
+        return [p.z for p in self.points]
+
+MIN_THETA = 90
+MAX_THETA = 180
+NUM_POINTS_TO_KEEP = MAX_THETA - MIN_THETA
+MAX_DIST = 20  # Maximum distance (in), to remove outliers
+
+# Initialize stuff
 cxn = Serial('/dev/ttyACM0', baudrate=9600)
+points = PointCollection(NUM_POINTS_TO_KEEP)
 
 
 def read_serial():
@@ -24,16 +57,40 @@ def read_serial():
     if data:
         try:
             data = data.decode('UTF-8')
+            print(data)
             res = data.split('\t')
             if len(res) == 2:
-                return res[0], res[1]
+                return float(res[0]), float(res[1])
         except UnicodeDecodeError:
             pass
+        except ValueError:
+            pass  # Error casting to float
     return False, False
 
 
+def polar_to_cart(radius, theta):
+    theta = math.radians(theta)
+    return radius*math.cos(theta), radius*math.sin(theta)
+
+
+def reading_to_dist(reading):
+    # [0.0002654, -0.2693, ]
+    return 0.0002654*(reading**2) - 0.2693 * reading + 74.25
+
+
+pyplot.ion()
+pyplot.show()
+pyplot.xlabel('x (in)')
+pyplot.ylabel('y (in)')
 while True:
-    (radius, theta) = read_serial()
-    if radius:
-        print('Radius: {}\tAngle: {}'.format(radius, theta))
+    (dist, angle) = read_serial()
+    if dist and dist < MAX_DIST:
+        (x, y) = polar_to_cart(dist, angle)
+        points.add_point(Point(x, y))
+        print('Raw dist: {4}\tRadius: {0:0.3f}\tAngle: {1}\tx:{2:0.3f}\ty:{3:0.3f}'.format(dist, angle, x, y, dist))
+        # Plot our scan
+        pyplot.cla()
+        pyplot.plot(points.get_x_values(), points.get_y_values(), 'ro')
+        pyplot.draw()
+        pyplot.pause(0.001)
     time.sleep(0.3)

@@ -14,14 +14,14 @@ const byte CMD_READ_POT = 1;
 const byte CMD_READ_BTN = 2;
 const byte XY_SERVO = 3;
 
-int THETA_MIN = 0;
-int THETA_MAX = 180;
+int THETA_MIN = 70;
+int THETA_MAX = 110;
 
 long prev_t = 0;
 int radius = 100;
 int pot_value = 100;
-int theta = 90;
-int thetaStep = 0;
+int theta = THETA_MIN;
+int thetaStep = 1;
 byte cmd_id = 0;
 
 byte btn_state = LOW;
@@ -46,9 +46,9 @@ void setTheta(int theta) {
 }
 
 // Take the average distance reading over 10 readings
-int READINGS_PER_ANGLE = 20;
-int distanceSum = 0;
-int readCount = 0;
+float READINGS_PER_ANGLE = 20.0;
+float distanceSum = 0.0;
+float readCount = 0.0;
 
 void loop() {
 
@@ -59,7 +59,7 @@ void loop() {
   if (readCount == READINGS_PER_ANGLE) {
 
     // Calculate the average distance reading
-    int distance = distanceSum / READINGS_PER_ANGLE;
+    float distance = distanceSum / READINGS_PER_ANGLE;
     
     // Send our position and distance reading to the computer
     transmitData(distance, theta);
@@ -69,26 +69,31 @@ void loop() {
     setTheta(theta);
     
     // Change the direction for the next theta change, if we've reached the max or min
-    if (theta > THETA_MAX || theta < THETA_MIN) {
+    if (theta >= THETA_MAX || theta <= THETA_MIN) {
       thetaStep = -thetaStep;
     }
 
     // Reset counter and sum
-    distanceSum = 0;
-    readCount = 0;
+    distanceSum = 0.0;
+    readCount = 0.0;
+
+    // Wait 50ms for Python program to receive and process
+    delay(200);
+  } else {
+    // Wait 10ms between readings
+    delay(10);
   }
-  // Wait 10ms between readings
-  delay(10);
-  
 }
 
 // Get the distance (in inches) measured by the IR sensor
 float readDistFromSensor() {
   // Slope and intercept determined by calibration experiment
-  return -19.3 * ((float)analogRead(IR_SENSOR)) + 245;
+//  [0.349182602325546,-27.900101889476854,6.870208215211669e+02]
+  float d = (float)analogRead(IR_SENSOR);
+  return 0.0002654*d*d - 0.2693*d  + 74.25;
 }
 
-void transmitData(int radius, int theta) {
+void transmitData(float radius, float theta) {
   Serial.println(result + radius + "\t" + theta);
 }
 
