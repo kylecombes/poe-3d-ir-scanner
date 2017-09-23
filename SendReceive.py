@@ -21,11 +21,8 @@ class PointCollection:
     def add_point(self, point):
         if len(self.points) >= self.points_to_keep:
             self.points.pop(0)  # Remove the oldest point
-        print('Adding point ({0:0.3f},{1:0.3f})'.format(point.x, point.y))
+        # print('Adding point ({0:0.3f},{1:0.3f})'.format(point.x, point.y))
         self.points.append(point)
-
-    def get_points(self):
-        return self.points
 
     def get_x_values(self):
         return [p.x for p in self.points]
@@ -39,10 +36,10 @@ class PointCollection:
 MIN_THETA = 90
 MAX_THETA = 180
 NUM_POINTS_TO_KEEP = MAX_THETA - MIN_THETA
-MAX_DIST = 20  # Maximum distance (in), to remove outliers
+MAX_DIST = 100  # Maximum distance (in), to remove outliers
 
 # Initialize stuff
-cxn = Serial('/dev/ttyACM0', baudrate=9600)
+cxn = Serial('/dev/ttyACM1', baudrate=9600)
 points = PointCollection(NUM_POINTS_TO_KEEP)
 
 
@@ -57,40 +54,40 @@ def read_serial():
     if data:
         try:
             data = data.decode('UTF-8')
-            print(data)
             res = data.split('\t')
-            if len(res) == 2:
-                return float(res[0]), float(res[1])
+            if len(res) == 3:
+                return float(res[0]), float(res[1]), float(res[2])
         except UnicodeDecodeError:
             pass
         except ValueError:
             pass  # Error casting to float
-    return False, False
+    return False, False, False
 
 
-def polar_to_cart(radius, theta):
+def spherical_to_cartesian(radius, theta, phi):
     theta = math.radians(theta)
-    return radius*math.cos(theta), radius*math.sin(theta)
+    phi = math.radians(phi)
+    x = radius*math.sin(phi)*math.cos(theta)
+    y = radius*math.cos(phi)*math.sin(theta)
+    z = radius*math.cos(phi)
+    return x, y, z
 
 
-def reading_to_dist(reading):
-    # [0.0002654, -0.2693, ]
-    return 0.0002654*(reading**2) - 0.2693 * reading + 74.25
-
-
+fig = pyplot.figure()
 pyplot.ion()
-pyplot.show()
-pyplot.xlabel('x (in)')
-pyplot.ylabel('y (in)')
+pyplot.show()  # Show the figure
+pyplot.xlabel('x (in)')  # Label x-axis
+pyplot.ylabel('y (in)')  # Label y-axis
+ax = fig.add_subplot(111, projection='3d')  # Set up 3D plot
 while True:
-    (dist, angle) = read_serial()
+    (dist, theta, phi) = read_serial()
     if dist and dist < MAX_DIST:
-        (x, y) = polar_to_cart(dist, angle)
-        points.add_point(Point(x, y))
-        print('Raw dist: {4}\tRadius: {0:0.3f}\tAngle: {1}\tx:{2:0.3f}\ty:{3:0.3f}'.format(dist, angle, x, y, dist))
+        (x, y, z) = spherical_to_cartesian(dist, theta, phi)
+        points.add_point(Point(x, y, z))
+        print('Raw dist: {4}\tRadius: {0:0.3f}\tAngle: {1}\tx:{2:0.3f}\ty:{3:0.3f}\tz:{3:0.3f}'.format(dist, theta, phi, x, y, z, dist))
         # Plot our scan
-        pyplot.cla()
-        pyplot.plot(points.get_x_values(), points.get_y_values(), 'ro')
-        pyplot.draw()
-        pyplot.pause(0.001)
-    time.sleep(0.3)
+        pyplot.cla()  # Clear figure
+        ax.scatter(points.get_x_values(), points.get_y_values(), points.get_z_values())
+        pyplot.draw()  # Redraw the figure
+        pyplot.pause(0.001)  # Wait for it to render
+    time.sleep(0.3)  # Might be unnecessary

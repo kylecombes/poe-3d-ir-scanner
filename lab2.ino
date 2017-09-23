@@ -1,37 +1,29 @@
 #include <Servo.h>
 
+#define IR_SENSOR A0
+#define PAN_SERVO 3
+#define TILT_SERVO 5
+#define THETA_MIN 80
+#define THETA_MAX 100
+#define PHI_MIN 80
+#define PHI_MAX 100
+
 Servo servoPan;  // create servo object to control a servo
+Servo servoTilt;  // create servo object to control a servo
 
-/*
-
-I intentionally use the const byte construct here
-instead of #define. It's less dangerous (no name collision possible)
-and safer since variables have scope.
-*/
-const byte PUSH_BUTTON = 8;
-const byte IR_SENSOR = A0;
-const byte CMD_READ_POT = 1;
-const byte CMD_READ_BTN = 2;
-const byte XY_SERVO = 3;
-
-int THETA_MIN = 70;
-int THETA_MAX = 110;
-
-long prev_t = 0;
 int radius = 100;
-int pot_value = 100;
 int theta = THETA_MIN;
+int phi = PHI_MIN;
 int thetaStep = 1;
-byte cmd_id = 0;
-
-byte btn_state = LOW;
+int phiStep = 2;
 
 String result="";
 
 void setup() {
   //Setup input and outputs: LEDs out, pushbutton in.
-  pinMode(PUSH_BUTTON, INPUT);
-  servoPan.attach(XY_SERVO);
+//  pinMode(PUSH_BUTTON, INPUT);
+  servoPan.attach(PAN_SERVO);
+  servoTilt.attach(TILT_SERVO);
   Serial.begin(9600);
 }
 
@@ -43,6 +35,16 @@ void setTheta(int theta) {
     theta = THETA_MIN;
   }
   servoPan.write(theta);
+}
+
+// Move the tilt servo to a particular angle
+void setPhi(int phi) {
+  if (phi > PHI_MAX) {
+    theta = PHI_MAX;
+  } else if (phi < PHI_MIN) {
+    theta = PHI_MIN;
+  }
+  servoTilt.write(phi);
 }
 
 // Take the average distance reading over 10 readings
@@ -62,7 +64,7 @@ void loop() {
     float distance = distanceSum / READINGS_PER_ANGLE;
     
     // Send our position and distance reading to the computer
-    transmitData(distance, theta);
+    transmitData(distance, theta, phi);
 
     // Pan to the next position
     theta += thetaStep;
@@ -71,6 +73,7 @@ void loop() {
     // Change the direction for the next theta change, if we've reached the max or min
     if (theta >= THETA_MAX || theta <= THETA_MIN) {
       thetaStep = -thetaStep;
+      tilt();
     }
 
     // Reset counter and sum
@@ -85,6 +88,18 @@ void loop() {
   }
 }
 
+// Tilts the scanner in the correct direction
+void tilt() {
+  // Tilt the scanner
+  phi += phiStep;
+  setPhi(phi);
+
+  // Check if we need to change directions
+  if (phi >= PHI_MAX || phi <= PHI_MIN) {
+    phiStep = -phiStep;
+  }
+}
+
 // Get the distance (in inches) measured by the IR sensor
 float readDistFromSensor() {
   // Slope and intercept determined by calibration experiment
@@ -93,7 +108,8 @@ float readDistFromSensor() {
   return 0.0002654*d*d - 0.2693*d  + 74.25;
 }
 
-void transmitData(float radius, float theta) {
-  Serial.println(result + radius + "\t" + theta);
+// Send data to the computer over serial
+void transmitData(float radius, float theta, float phi) {
+  Serial.println(result + radius + "\t" + theta + "\t" + phi);
 }
 
