@@ -3,10 +3,10 @@
 #define IR_SENSOR A0
 #define PAN_SERVO 3
 #define TILT_SERVO 5
-#define THETA_MIN 75
-#define THETA_MAX 115
-#define PHI_MIN 75
-#define PHI_MAX 115
+#define THETA_MIN 70
+#define THETA_MAX 110
+#define PHI_MIN 50
+#define PHI_MAX 100
 
 Servo servoPan;  // create servo object to control the pan servo
 Servo servoTilt;  // create servo object to control the tilt servo
@@ -16,6 +16,7 @@ int theta = THETA_MIN;
 int phi = PHI_MIN;
 int thetaStep = 1;
 int phiStep = 1;
+bool justTilted = false;
 
 String result="";
 
@@ -46,7 +47,7 @@ void setPhi(int phi) {
   servoTilt.write(phi);
 }
 
-// Take the average distance reading over 10 readings
+// Take the average distance reading over 20 readings
 float READINGS_PER_ANGLE = 20.0;
 float distanceSum = 0.0;
 float readCount = 0.0;
@@ -73,10 +74,10 @@ void loop() {
     readCount = 0.0;
 
     // Wait 100ms for Python program to receive and process
-    delay(100);
+//    delay(100);
   } else {
-    // Wait 10ms between readings
-    delay(5);
+    // Wait 10ms between readings for the sensor to measure again
+    delay(50);
   }
 }
 
@@ -87,9 +88,15 @@ void pan() {
 
   // If we've gone past the max or min, change directions and go back the other way
   if (theta > THETA_MAX || theta < THETA_MIN) {
-    thetaStep = -thetaStep;
-    theta += 2*thetaStep;
-    tilt();
+    if (justTilted) {
+      // If we just tilted and took a scan, change pan directions
+      thetaStep = -thetaStep;
+      theta += 2*thetaStep;
+      justTilted = false;
+    } else { // Tilt and take a scan point before panning
+      tilt();
+      justTilted = true;
+    }
   }
 
   // Move the servo
