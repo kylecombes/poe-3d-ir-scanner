@@ -2,6 +2,7 @@
 
 from serial import Serial
 import matplotlib.pyplot as pyplot
+from mpl_toolkits.mplot3d import Axes3D
 import time
 import math
 
@@ -33,13 +34,11 @@ class PointCollection:
     def get_z_values(self):
         return [p.z for p in self.points]
 
-MIN_THETA = 90
-MAX_THETA = 180
-NUM_POINTS_TO_KEEP = MAX_THETA - MIN_THETA
+NUM_POINTS_TO_KEEP = 1600
 MAX_DIST = 100  # Maximum distance (in), to remove outliers
 
 # Initialize stuff
-cxn = Serial('/dev/ttyACM1', baudrate=9600)
+cxn = Serial('/dev/ttyACM0', baudrate=9600)
 points = PointCollection(NUM_POINTS_TO_KEEP)
 
 
@@ -68,25 +67,26 @@ def spherical_to_cartesian(radius, theta, phi):
     theta = math.radians(theta)
     phi = math.radians(phi)
     x = radius*math.sin(phi)*math.cos(theta)
-    y = radius*math.cos(phi)*math.sin(theta)
+    y = radius*math.sin(phi)*math.sin(theta)
     z = radius*math.cos(phi)
     return x, y, z
 
 
 fig = pyplot.figure()
-pyplot.ion()
-pyplot.show()  # Show the figure
-pyplot.xlabel('x (in)')  # Label x-axis
-pyplot.ylabel('y (in)')  # Label y-axis
+# pyplot.ion()
+fig.show()  # Show the figure
 ax = fig.add_subplot(111, projection='3d')  # Set up 3D plot
+# ax.xlabel('x (in)')  # Label x-axis
+# ax.ylabel('y (in)')  # Label y-axis
+# ax.ylabel('z (in)')  # Label z-axis
 while True:
     (dist, theta, phi) = read_serial()
     if dist and dist < MAX_DIST:
         (x, y, z) = spherical_to_cartesian(dist, theta, phi)
         points.add_point(Point(x, y, z))
-        print('Raw dist: {4}\tRadius: {0:0.3f}\tAngle: {1}\tx:{2:0.3f}\ty:{3:0.3f}\tz:{3:0.3f}'.format(dist, theta, phi, x, y, z, dist))
+        print('Radius: {0:0.3f}\tAngle: {1}\tx:{2:0.3f}\ty:{3:0.3f}\tz:{3:0.3f}'.format(dist, theta, phi, x, y, z))
         # Plot our scan
-        pyplot.cla()  # Clear figure
+        ax.cla()  # Clear figure
         ax.scatter(points.get_x_values(), points.get_y_values(), points.get_z_values())
         pyplot.draw()  # Redraw the figure
         pyplot.pause(0.001)  # Wait for it to render

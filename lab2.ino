@@ -3,25 +3,24 @@
 #define IR_SENSOR A0
 #define PAN_SERVO 3
 #define TILT_SERVO 5
-#define THETA_MIN 80
-#define THETA_MAX 100
-#define PHI_MIN 80
-#define PHI_MAX 100
+#define THETA_MIN 75
+#define THETA_MAX 115
+#define PHI_MIN 75
+#define PHI_MAX 115
 
-Servo servoPan;  // create servo object to control a servo
-Servo servoTilt;  // create servo object to control a servo
+Servo servoPan;  // create servo object to control the pan servo
+Servo servoTilt;  // create servo object to control the tilt servo
 
 int radius = 100;
 int theta = THETA_MIN;
 int phi = PHI_MIN;
 int thetaStep = 1;
-int phiStep = 2;
+int phiStep = 1;
 
 String result="";
 
 void setup() {
-  //Setup input and outputs: LEDs out, pushbutton in.
-//  pinMode(PUSH_BUTTON, INPUT);
+  // Setup the servos and being serial communication with a computer
   servoPan.attach(PAN_SERVO);
   servoTilt.attach(TILT_SERVO);
   Serial.begin(9600);
@@ -40,9 +39,9 @@ void setTheta(int theta) {
 // Move the tilt servo to a particular angle
 void setPhi(int phi) {
   if (phi > PHI_MAX) {
-    theta = PHI_MAX;
+    phi = PHI_MAX;
   } else if (phi < PHI_MIN) {
-    theta = PHI_MIN;
+    phi = PHI_MIN;
   }
   servoTilt.write(phi);
 }
@@ -66,44 +65,56 @@ void loop() {
     // Send our position and distance reading to the computer
     transmitData(distance, theta, phi);
 
-    // Pan to the next position
-    theta += thetaStep;
-    setTheta(theta);
-    
-    // Change the direction for the next theta change, if we've reached the max or min
-    if (theta >= THETA_MAX || theta <= THETA_MIN) {
-      thetaStep = -thetaStep;
-      tilt();
-    }
+    // Pan the sensor in the correct direction
+    pan();
 
     // Reset counter and sum
     distanceSum = 0.0;
     readCount = 0.0;
 
-    // Wait 50ms for Python program to receive and process
-    delay(200);
+    // Wait 100ms for Python program to receive and process
+    delay(100);
   } else {
     // Wait 10ms between readings
-    delay(10);
+    delay(5);
   }
+}
+
+// Pan the scanner in the correct direction
+void pan() {
+  // Update theta
+  theta += thetaStep;
+
+  // If we've gone past the max or min, change directions and go back the other way
+  if (theta > THETA_MAX || theta < THETA_MIN) {
+    thetaStep = -thetaStep;
+    theta += 2*thetaStep;
+    tilt();
+  }
+
+  // Move the servo
+  setTheta(theta);
 }
 
 // Tilts the scanner in the correct direction
 void tilt() {
-  // Tilt the scanner
+  // Update phi
   phi += phiStep;
-  setPhi(phi);
-
-  // Check if we need to change directions
-  if (phi >= PHI_MAX || phi <= PHI_MIN) {
+  
+  // If we've gone past the max or min, change directions and go back the other way
+  if (phi > PHI_MAX || phi < PHI_MIN) {
+    Serial.println(result + "Phi too big/small! " + phi + " vs " + PHI_MAX);
     phiStep = -phiStep;
+    phi += 2*phiStep;
   }
+  
+  // Move the servo
+  setPhi(phi);
 }
 
 // Get the distance (in inches) measured by the IR sensor
 float readDistFromSensor() {
   // Slope and intercept determined by calibration experiment
-//  [0.349182602325546,-27.900101889476854,6.870208215211669e+02]
   float d = (float)analogRead(IR_SENSOR);
   return 0.0002654*d*d - 0.2693*d  + 74.25;
 }
