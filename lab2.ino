@@ -3,19 +3,19 @@
 #define IR_SENSOR A0
 #define PAN_SERVO 3
 #define TILT_SERVO 5
-#define THETA_MIN 75
-#define THETA_MAX 115
-#define PHI_MIN 75
+#define THETA_MIN 80
+#define THETA_MAX 100
+#define PHI_MIN 60
 #define PHI_MAX 115
 
-Servo servoPan;  // create servo object to control the pan servo
-Servo servoTilt;  // create servo object to control the tilt servo
+Servo servoPan;  // Create servo object to control the pan servo
+Servo servoTilt;  // Create servo object to control the tilt servo
 
 int radius = 100;
-int theta = THETA_MIN;
-int phi = PHI_MIN;
-int thetaStep = 1;
-int phiStep = 1;
+int theta = THETA_MIN; // Pan
+int phi = PHI_MIN; // Tilt
+int thetaStep = 2; // Measures every 2 degrees
+int phiStep = 2; // Measures every 2 degrees
 
 String result="";
 
@@ -28,7 +28,7 @@ void setup() {
 
 // Move the panning servo to a particular angle
 void setTheta(int theta) {
-  if (theta > THETA_MAX) {
+  if (theta > THETA_MAX) { 
     theta = THETA_MAX;
   } else if (theta < THETA_MIN) {
     theta = THETA_MIN;
