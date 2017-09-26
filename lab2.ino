@@ -8,14 +8,13 @@
 #define PHI_MIN 75
 #define PHI_MAX 120
 
-Servo servoPan;  // create servo object to control the pan servo
-Servo servoTilt;  // create servo object to control the tilt servo
+Servo servoPan;  // Create servo object to control the pan servo
+Servo servoTilt;  // Create servo object to control the tilt servo
 
-int radius = 100;
-int theta = THETA_MIN;
-int phi = PHI_MIN;
-int thetaStep = 1;
-int phiStep = 1;
+int theta = THETA_MIN; // Pan
+int phi = PHI_MIN; // Tilt
+int thetaStep = 1; // Measures every 2 degrees
+int phiStep = 1; // Measures every 2 degrees
 bool justTilted = false;
 
 String result="";

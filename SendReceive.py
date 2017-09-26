@@ -6,6 +6,7 @@ import time
 import math
 
 
+# Object that has properties of (x,y,z)
 class Point:
     def __init__(self, x, y=0.0, z=0.0):
         self.x = x
@@ -13,28 +14,34 @@ class Point:
         self.z = z
 
 
+# Make a list of points
 class PointCollection:
     def __init__(self, points_to_keep):
         self.points_to_keep = points_to_keep
         self.points = []
 
+    # Add points to the list
     def add_point(self, point):
         if len(self.points) >= self.points_to_keep:
             self.points.pop(0)  # Remove the oldest point
-        # print('Adding point ({0:0.3f},{1:0.3f})'.format(point.x, point.y))
         self.points.append(point)
 
+    # Go through all the points and return all x values
     def get_x_values(self):
         return [p.x for p in self.points]
 
+    # Go through all the points and return all y values
     def get_y_values(self):
         return [p.y for p in self.points]
 
+    # Go through all the points and return all z values
     def get_z_values(self):
         return [p.z for p in self.points]
 
-NUM_POINTS_TO_KEEP = 2000
-MAX_DIST = 30  # Maximum distance (in), to remove outliers4# Initialize stuff
+NUM_POINTS_TO_KEEP = 2000 # Number of points to keep on the scatter plot
+MAX_DIST = 30  # Maximum distance (in), to remove outliers
+
+#  Initialize stuff
 cxn = Serial('/dev/ttyACM0', baudrate=9600)
 points = PointCollection(NUM_POINTS_TO_KEEP)
 
@@ -60,6 +67,7 @@ def read_serial():
     return False, False, False
 
 
+# Convert spherical to cartesian coordinates
 def spherical_to_cartesian(radius, theta, phi):
     theta = math.radians(theta)
     phi = math.radians(phi)
