@@ -3,10 +3,10 @@
 #define IR_SENSOR A0
 #define PAN_SERVO 3
 #define TILT_SERVO 5
-#define THETA_MIN 70
-#define THETA_MAX 110
-#define PHI_MIN 50
-#define PHI_MAX 100
+#define THETA_MIN 80
+#define THETA_MAX 100
+#define PHI_MIN 75
+#define PHI_MAX 120
 
 Servo servoPan;  // create servo object to control the pan servo
 Servo servoTilt;  // create servo object to control the tilt servo
@@ -123,7 +123,8 @@ void tilt() {
 float readDistFromSensor() {
   // Slope and intercept determined by calibration experiment
   float d = (float)analogRead(IR_SENSOR);
-  return 0.0002654*d*d - 0.2693*d  + 74.25;
+  // Convert reading to inches
+  return 0.0000000052465*d*d*d*d - 0.0000083255*d*d*d + 0.00483*d*d - 1.2578*d + 141;
 }
 
 // Send data to the computer over serial

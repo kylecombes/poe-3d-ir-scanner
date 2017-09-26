@@ -2,7 +2,6 @@
 
 from serial import Serial
 import matplotlib.pyplot as pyplot
-from mpl_toolkits.mplot3d import Axes3D
 import time
 import math
 
@@ -35,7 +34,7 @@ class PointCollection:
         return [p.z for p in self.points]
 
 NUM_POINTS_TO_KEEP = 2000
-MAX_DIST = 40  # Maximum distance (in), to remove outliers4# Initialize stuff
+MAX_DIST = 30  # Maximum distance (in), to remove outliers4# Initialize stuff
 cxn = Serial('/dev/ttyACM0', baudrate=9600)
 points = PointCollection(NUM_POINTS_TO_KEEP)
 
@@ -91,4 +90,3 @@ while True:
             pyplot.pause(0.001)  # Wait for it to render
         else:
             print('Out of range: Radius: {0:0.3f}\tTheta: {1:0.3f}\tPhi: {2:0.3f}\tx:{3:0.3f}\ty:{4:0.3f}\tz:{5:0.3f}'.format(dist, theta, phi, x, y, z))
-    time.sleep(0.3)  # Might be unnecessary
