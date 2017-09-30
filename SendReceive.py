@@ -2,6 +2,7 @@
 
 from serial import Serial
 import matplotlib.pyplot as pyplot
+from mpl_toolkits.mplot3d import Axes3D
 import time
 import math
 
@@ -38,7 +39,7 @@ class PointCollection:
     def get_z_values(self):
         return [p.z for p in self.points]
 
-NUM_POINTS_TO_KEEP = 2000 # Number of points to keep on the scatter plot
+NUM_POINTS_TO_KEEP = 900 # Number of points to keep on the scatter plot
 MAX_DIST = 30  # Maximum distance (in), to remove outliers
 
 #  Initialize stuff
@@ -81,9 +82,6 @@ fig = pyplot.figure()
 # pyplot.ion()
 fig.show()  # Show the figure
 ax = fig.add_subplot(111, projection='3d')  # Set up 3D plot
-# ax.xlabel('x (in)')  # Label x-axis
-# ax.ylabel('y (in)')  # Label y-axis
-# ax.ylabel('z (in)')  # Label z-axis
 while True:
     (dist, theta, phi) = read_serial()
     if dist:

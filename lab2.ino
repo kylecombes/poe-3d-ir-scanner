@@ -13,8 +13,8 @@ Servo servoTilt;  // Create servo object to control the tilt servo
 
 int theta = THETA_MIN; // Pan
 int phi = PHI_MIN; // Tilt
-int thetaStep = 1; // Measures every 2 degrees
-int phiStep = 1; // Measures every 2 degrees
+int thetaStep = 1; // Measure every 1 degree
+int phiStep = 1; // Measure every 1 degree
 bool justTilted = false;
 
 String result="";
